@@ -6,12 +6,11 @@ import { useRouter } from 'next/navigation';
 interface PrototypeCardProps {
   title: string;
   description: string;
-  target: string;
   thumbnail: string;
   href: string;
 }
 
-export function PrototypeCard({ title, description, target, thumbnail, href }: PrototypeCardProps) {
+export function PrototypeCard({ title, description, thumbnail, href }: PrototypeCardProps) {
   const router = useRouter();
 
   const handleClick = () => {
