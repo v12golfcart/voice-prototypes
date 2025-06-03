@@ -65,18 +65,26 @@ This project explores the potential of AI agents to conduct sophisticated user i
 
 ## 🛠 Technical Stack
 
-- **Framework:** Next.js 15.3 with React 19
+- **Framework:** Next.js 15.3 with React 19 and App Router
 - **Language:** TypeScript for type safety
+- **UI Library:** Mantine v8 - Modern React components with excellent mobile support
 - **Voice:** 11Labs integration (planned)
-- **Styling:** CSS Modules with responsive design
+- **Styling:** Mantine's CSS-in-JS system with PostCSS
 - **Development:** Turbopack for fast iteration
+
+### **Mantine Setup Includes:**
+- **Core Components:** Buttons, inputs, layouts, typography
+- **Notifications:** Toast messages for voice interaction feedback
+- **Modals:** Dialog system for interview flows and consent forms
+- **Responsive Design:** Mobile-first breakpoints and utilities
+- **Theme System:** Custom fonts (Geist) and consistent design tokens
 
 ## 🏗 Project Structure
 
 ```
 src/
 ├── app/
-│   ├── layout.tsx                 # Root layout
+│   ├── layout.tsx                 # Root layout with Mantine providers
 │   ├── page.tsx                   # Landing page with prototype navigation
 │   ├── instant-insight/           # Prototype 1: Product feedback
 │   ├── smart-concierge/           # Prototype 2: CPG follow-up
@@ -93,6 +101,7 @@ src/
 - **Context-Aware:** Leverage available data to ask better questions
 - **Moment-Appropriate:** Capture feedback when users are most engaged
 - **Action-Oriented:** Generate insights that directly inform decisions
+- **Mobile-Optimized:** Seamless experience across all devices
 
 ## 🚀 Getting Started
 
@@ -105,6 +114,11 @@ npm run dev
 
 # Visit http://localhost:3000
 ```
+
+**Dependencies are already installed:**
+- Mantine UI components and theming system
+- PostCSS configuration for responsive design
+- Notification and modal systems ready for voice interactions
 
 ## 🎯 Prototype Goals
 
