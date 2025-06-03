@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 interface PrototypeCardProps {
   title: string;
   description: string;
-  thumbnail: string;
+  thumbnail?: string;
   href: string;
 }
 
@@ -26,14 +26,16 @@ export function PrototypeCard({ title, description, thumbnail, href }: Prototype
       style={{ cursor: 'pointer', height: '100%' }}
       onClick={handleClick}
     >
-      <Card.Section>
-        <Image
-          src={thumbnail}
-          height={120}
-          alt={title}
-          fallbackSrc="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0xNDQgOTBIMTc2VjEyMkgxNDRWOTBaIiBmaWxsPSIjRERERERcIi8+Cjwvc3ZnPgo="
-        />
-      </Card.Section>
+      {thumbnail && (
+        <Card.Section>
+          <Image
+            src={thumbnail}
+            height={120}
+            alt={title}
+            fallbackSrc="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0xNDQgOTBIMTc2VjEyMkgxNDRWOTBaIiBmaWxsPSIjRERERERcIi8+Cjwvc3ZnPgo="
+          />
+        </Card.Section>
+      )}
 
       <Stack gap="xs" mt="md">
         <Text fw={600} size="lg" lineClamp={1}>

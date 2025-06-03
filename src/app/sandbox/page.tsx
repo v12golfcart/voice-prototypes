@@ -1,14 +1,29 @@
 'use client';
 
-import { Text } from '@mantine/core';
+import { Stack } from '@mantine/core';
 import { PrototypeLayout } from '@/components/shared/PrototypeLayout';
+import { VoiceTestBlock } from '@/components/shared/VoiceTestBlock';
 
 export default function SandboxPage() {
   return (
     <PrototypeLayout title="Sandbox">
-      <Text size="lg" ta="center" c="dimmed">
-        Experimental space for testing...
-      </Text>
+      <Stack gap="xl">
+        {/* 11Labs Voice Test */}
+        <VoiceTestBlock
+          title="11Labs Voice Interface Test"
+          subtitle="11Labs will listen to what you say and play it back to you."
+          prototype="sandbox"
+        />
+        
+        {/* Future provider blocks would go here */}
+        {/* 
+        <VoiceTestBlock
+          title="VAPI Voice Interface Test"
+          subtitle="VAPI alternative implementation"
+          prototype="sandbox-vapi"
+        />
+        */}
+      </Stack>
     </PrototypeLayout>
   );
 } 

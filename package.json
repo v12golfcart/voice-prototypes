@@ -13,6 +13,7 @@
     "@mantine/hooks": "^8.0.2",
     "@mantine/modals": "^8.0.2",
     "@mantine/notifications": "^8.0.2",
+    "@tabler/icons-react": "^3.34.0",
     "next": "15.3.3",
     "postcss": "^8.5.4",
     "postcss-preset-mantine": "^1.17.0",
