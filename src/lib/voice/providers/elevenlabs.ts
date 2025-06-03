@@ -110,14 +110,12 @@ export class ElevenLabsProvider extends BaseVoiceProvider {
       
     } catch (error) {
       console.warn('11Labs STT failed, using browser fallback:', error);
-      return this.transcribeWithBrowserAPI(audioBlob);
+      return this.transcribeWithBrowserAPI();
     }
   }
 
-  private async transcribeWithBrowserAPI(audioBlob: Blob): Promise<string> {
+  private async transcribeWithBrowserAPI(): Promise<string> {
     return new Promise((resolve) => {
-      console.log('🔄 Using browser fallback transcription');
-      
       // Simulate realistic transcription
       const sampleResponses = [
         "Hello, this is a test message",
@@ -130,7 +128,6 @@ export class ElevenLabsProvider extends BaseVoiceProvider {
       const randomResponse = sampleResponses[Math.floor(Math.random() * sampleResponses.length)];
       
       setTimeout(() => {
-        console.log('✅ Browser transcription result:', randomResponse);
         resolve(randomResponse);
       }, 500);
     });

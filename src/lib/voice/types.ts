@@ -3,7 +3,7 @@ export interface VoiceConfig {
   apiKey: string;
   voiceId?: string;
   model?: string;
-  settings?: Record<string, any>;
+  settings?: Record<string, unknown>;
 }
 
 export interface VoiceMessage {

@@ -82,8 +82,9 @@ export function useVoice(prototype: string) {
 
       const audioBlob = await providerRef.current.stopRecording();
       
-      // Use real transcription
-      const transcription = await (providerRef.current as any).transcribeAudio(audioBlob);
+      // Use real transcription - cast to ElevenLabsProvider for transcription method
+      const provider = providerRef.current as ElevenLabsProvider;
+      const transcription = await provider.transcribeAudio(audioBlob);
       
       // Add user message
       const userMessage: VoiceMessage = {
@@ -122,12 +123,12 @@ export function useVoice(prototype: string) {
       // Auto-play AI response
       playAudio(speechUrl);
 
-    } catch (error) {
+    } catch (err) {
       setState(prev => ({ 
         ...prev, 
         isRecording: false,
         isProcessing: false,
-        error: error instanceof Error ? error.message : 'Failed to process recording'
+        error: err instanceof Error ? err.message : 'Failed to process recording'
       }));
     }
   }, []);
@@ -152,7 +153,7 @@ export function useVoice(prototype: string) {
       }));
     };
     
-    audioRef.current.play().catch(error => {
+    audioRef.current.play().catch(() => {
       setState(prev => ({ 
         ...prev, 
         isPlaying: false,
