@@ -2,7 +2,7 @@
 
 import { Stack } from '@mantine/core';
 import { PrototypeLayout } from '@/components/shared/PrototypeLayout';
-import { VoiceTestBlock } from '@/components/shared/VoiceTestBlock';
+import { VoiceTestBlock } from './VoiceTestBlock';
 
 export default function SandboxPage() {
   return (

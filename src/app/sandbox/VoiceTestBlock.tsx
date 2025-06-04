@@ -2,7 +2,7 @@
 
 import { Stack, Text, Title, Alert, Group, Box } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
-import { VoiceButton } from '../voice/VoiceButton';
+import { VoiceButton } from '@/components/voice/VoiceButton';
 
 interface VoiceTestBlockProps {
   title: string;
