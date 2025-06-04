@@ -7,9 +7,10 @@ import { useVoice } from './hooks/useVoice';
 interface VoiceButtonProps {
   prototype: string;
   disabled?: boolean;
+  onActivity?: (message: string) => void;
 }
 
-export function VoiceButton({ prototype, disabled = false }: VoiceButtonProps) {
+export function VoiceButton({ prototype, disabled = false, onActivity }: VoiceButtonProps) {
   const {
     isRecording,
     isProcessing,
@@ -19,12 +20,14 @@ export function VoiceButton({ prototype, disabled = false }: VoiceButtonProps) {
     startRecording,
     stopRecording,
     initializeProvider,
-  } = useVoice(prototype);
+  } = useVoice(prototype, { onActivity });
 
   const handleClick = async () => {
     if (isRecording) {
+      onActivity?.('user clicks button to stop talking');
       await stopRecording();
     } else {
+      onActivity?.('user clicks button to start talking');
       await startRecording();
     }
   };
@@ -80,16 +83,7 @@ export function VoiceButton({ prototype, disabled = false }: VoiceButtonProps) {
         {buttonState.text}
       </Button>
 
-      {currentSession && currentSession.messages.length > 0 && (
-        <Stack gap="xs" align="center">
-          <Text size="sm" c="dimmed">
-            Messages in this session: {currentSession.messages.length}
-          </Text>
-          <Text size="xs" c="dimmed">
-            Started: {currentSession.startedAt.toLocaleTimeString()}
-          </Text>
-        </Stack>
-      )}
+      {/* Session metadata removed per request */}
 
     </Stack>
   );

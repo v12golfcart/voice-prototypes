@@ -5,7 +5,9 @@ import { VoiceState, VoiceSession, VoiceMessage, VoiceProvider } from '@/lib/voi
 import { getVoiceConfig } from '@/lib/voice/config';
 import { ElevenLabsProvider } from '@/lib/voice/providers/elevenlabs';
 
-export function useVoice(prototype: string) {
+export function useVoice(prototype: string, options?: { onActivity?: (message: string) => void }) {
+  const { onActivity } = options || {};
+
   const [state, setState] = useState<VoiceState>({
     isRecording: false,
     isProcessing: false,
@@ -86,6 +88,8 @@ export function useVoice(prototype: string) {
       const provider = providerRef.current as ElevenLabsProvider;
       const transcription = await provider.transcribeAudio(audioBlob);
       
+      onActivity?.(`STT -- text is generated: "${transcription}"`);
+      
       // Add user message
       const userMessage: VoiceMessage = {
         id: `msg_${Date.now()}`,
@@ -98,9 +102,16 @@ export function useVoice(prototype: string) {
       // Process with AI
       const aiResponse = await providerRef.current.processMessage(transcription);
       
-      // Generate speech for AI response
+      onActivity?.('Process -- text is finished processing');
+
+      // Request speech synthesis
+      onActivity?.('TTS -- speech generation requested');
+
       const speechUrl = await providerRef.current.synthesizeSpeech(aiResponse);
+
+      onActivity?.('TTS -- speech generation finished');
       
+      // Add AI message
       const aiMessage: VoiceMessage = {
         id: `msg_${Date.now() + 1}`,
         type: 'assistant',
@@ -131,20 +142,27 @@ export function useVoice(prototype: string) {
         error: err instanceof Error ? err.message : 'Failed to process recording'
       }));
     }
-  }, []);
+  }, [onActivity]);
 
   // Play audio
   const playAudio = useCallback((audioUrl: string) => {
     setState(prev => ({ ...prev, isPlaying: true }));
-    
+
     if (audioRef.current) {
       audioRef.current.pause();
     }
-    
+
     audioRef.current = new Audio(audioUrl);
+
+    audioRef.current.onplay = () => {
+      onActivity?.('TTS -- speech playback started');
+    };
+
     audioRef.current.onended = () => {
       setState(prev => ({ ...prev, isPlaying: false }));
+      onActivity?.('TTS -- speech playback finished');
     };
+
     audioRef.current.onerror = () => {
       setState(prev => ({ 
         ...prev, 
@@ -152,7 +170,7 @@ export function useVoice(prototype: string) {
         error: 'Failed to play audio'
       }));
     };
-    
+
     audioRef.current.play().catch(() => {
       setState(prev => ({ 
         ...prev, 
@@ -160,7 +178,7 @@ export function useVoice(prototype: string) {
         error: 'Failed to play audio'
       }));
     });
-  }, []);
+  }, [onActivity]);
 
   // Cleanup
   useEffect(() => {
@@ -181,4 +199,4 @@ export function useVoice(prototype: string) {
     playAudio,
     initializeProvider,
   };
-} 
+}
