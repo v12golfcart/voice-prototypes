@@ -1,6 +1,6 @@
 export interface VoiceConfig {
   provider: 'elevenlabs' | 'vapi';
-  apiKey: string;
+  apiKey?: string;
   voiceId?: string;
   model?: string;
   settings?: Record<string, unknown>;

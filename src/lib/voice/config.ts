@@ -4,7 +4,6 @@ import { VoiceConfig } from './types';
 export const voiceConfigs: Record<string, VoiceConfig> = {
   'instant-insight': {
     provider: 'elevenlabs',
-    apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '',
     voiceId: 'pNInz6obpgDQGcFmaJgB', // Professional, clear voice
     model: 'eleven_monolingual_v1',
     settings: {
@@ -16,7 +15,6 @@ export const voiceConfigs: Record<string, VoiceConfig> = {
   
   'smart-concierge': {
     provider: 'elevenlabs',
-    apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '',
     voiceId: '21m00Tcm4TlvDq8ikWAM', // Friendly, warm voice
     model: 'eleven_monolingual_v1',
     settings: {
@@ -28,7 +26,6 @@ export const voiceConfigs: Record<string, VoiceConfig> = {
   
   'expert-pulse': {
     provider: 'elevenlabs',
-    apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '',
     voiceId: 'AZnzlk1XvdvUeBnXmlld', // Professional, authoritative
     model: 'eleven_monolingual_v1',
     settings: {
@@ -40,7 +37,6 @@ export const voiceConfigs: Record<string, VoiceConfig> = {
   
   'sandbox': {
     provider: 'elevenlabs',
-    apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '',
     voiceId: 'pNInz6obpgDQGcFmaJgB', // Default voice for testing
     model: 'eleven_monolingual_v1',
     settings: {
@@ -55,10 +51,6 @@ export function getVoiceConfig(prototype: string): VoiceConfig {
   const config = voiceConfigs[prototype];
   if (!config) {
     throw new Error(`No voice configuration found for prototype: ${prototype}`);
-  }
-  
-  if (!config.apiKey) {
-    throw new Error('ElevenLabs API key not configured. Set NEXT_PUBLIC_ELEVENLABS_API_KEY in your environment.');
   }
   
   return config;

@@ -3,21 +3,11 @@ import { VoiceConfig } from '../types';
 
 export class ElevenLabsProvider extends BaseVoiceProvider {
   name = 'elevenlabs';
-  private baseUrl = 'https://api.elevenlabs.io/v1';
+  private apiBasePath = '/api/voice/elevenlabs';
 
   async initialize(config: VoiceConfig): Promise<void> {
     this.config = config;
-    // Test API key validity
-    try {
-      const response = await fetch(`${this.baseUrl}/user`, {
-        headers: { 'xi-api-key': config.apiKey }
-      });
-      if (!response.ok) {
-        throw new Error('Invalid API key');
-      }
-    } catch (error) {
-      throw new Error(`ElevenLabs initialization failed: ${error}`);
-    }
+    // Nothing to validate on the client anymore – assume server route hides the key
   }
 
   async synthesizeSpeech(text: string): Promise<string> {
@@ -26,26 +16,21 @@ export class ElevenLabsProvider extends BaseVoiceProvider {
     const voiceId = this.config.voiceId || 'pNInz6obpgDQGcFmaJgB'; // Default voice
     
     try {
-      const response = await fetch(`${this.baseUrl}/text-to-speech/${voiceId}`, {
+      const response = await fetch(`${this.apiBasePath}/tts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'xi-api-key': this.config.apiKey,
         },
         body: JSON.stringify({
           text,
-          model_id: this.config.model || 'eleven_monolingual_v1',
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.8,
-            style: 0.0,
-            use_speaker_boost: true
-          }
+          voiceId,
+          modelId: this.config.model || 'eleven_monolingual_v1',
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`TTS failed: ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`TTS failed: ${errorText}`);
       }
 
       const audioBlob = await response.blob();
@@ -80,13 +65,10 @@ export class ElevenLabsProvider extends BaseVoiceProvider {
       formData.append('file', audioBlob, 'recording.wav');
       formData.append('model_id', 'scribe_v1'); // Fixed: was 'whisper-1'
 
-      console.log('📡 Making 11Labs STT request...');
+      console.log('📡 Making 11Labs STT request (via server proxy)...');
 
-      const response = await fetch(`${this.baseUrl}/speech-to-text`, {
+      const response = await fetch(`${this.apiBasePath}/stt`, {
         method: 'POST',
-        headers: {
-          'xi-api-key': this.config.apiKey,
-        },
         body: formData,
       });
 
@@ -99,7 +81,7 @@ export class ElevenLabsProvider extends BaseVoiceProvider {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ STT API Error:', errorText);
-        throw new Error(`STT failed: ${response.statusText} - ${errorText}`);
+        throw new Error(`STT failed: ${errorText}`);
       }
 
       const result = await response.json();
