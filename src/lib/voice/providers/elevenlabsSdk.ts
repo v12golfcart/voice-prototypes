@@ -27,8 +27,13 @@ export class ElevenLabsSdkProvider extends BaseVoiceProvider {
       const agentId = (this.config.settings as Record<string, unknown>)?.agentId as string;
       if (!agentId) throw new Error('Missing agentId in config.settings');
 
-      // Ensure mic permission is granted (SDK will also prompt, but we pre-ask so UI remains consistent)
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Ensure mic permission is granted; stop tracks right away so we don't keep an extra open stream.
+      try {
+        const permStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        permStream.getTracks().forEach(track => track.stop());
+      } catch {
+        /* permission denied handled by SDK later */
+      }
 
       const { Conversation } = await import('@elevenlabs/client');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,10 +59,13 @@ export class ElevenLabsSdkProvider extends BaseVoiceProvider {
    */
   async stopRecording(): Promise<Blob> {
     if (this.conversation) {
-      await this.conversation.setMuted?.(true);
+      try {
+        await this.conversation.endSession();
+      } finally {
+        this.conversation = null;
+      }
     }
-
-    // Return empty blob to satisfy hook signature
+    // Return placeholder blob – not used by SDK path
     return new Blob();
   }
 
