@@ -15,7 +15,7 @@ export default function SandboxPage() {
           prototype="sandbox"
           notes={
             <List size="sm" spacing="xs" withPadding>
-              <List.Item>it's simple and you have full control over processing</List.Item>
+              <List.Item>It&apos;s simple and you have full control over processing</List.Item>
               <List.Item>but the latency is bad – okay for submission UXs but not back-and-forth UX</List.Item>
             </List>
           }
