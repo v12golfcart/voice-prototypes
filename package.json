@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@elevenlabs/client": "^0.1.6",
     "@mantine/core": "^8.0.2",
     "@mantine/hooks": "^8.0.2",
     "@mantine/modals": "^8.0.2",

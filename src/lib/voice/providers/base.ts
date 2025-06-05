@@ -22,7 +22,7 @@ export abstract class BaseVoiceProvider implements VoiceProvider {
         }
       };
 
-      this.mediaRecorder.start();
+      this.mediaRecorder.start(1000);
     } catch (error) {
       throw new Error(`Failed to start recording: ${error}`);
     }
@@ -36,7 +36,8 @@ export abstract class BaseVoiceProvider implements VoiceProvider {
       }
 
       this.mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+        const mime = this.mediaRecorder?.mimeType || 'audio/webm';
+        const audioBlob = new Blob(this.audioChunks, { type: mime });
         this.audioChunks = [];
         
         // Stop all tracks to release microphone

@@ -1,5 +1,5 @@
 export interface VoiceConfig {
-  provider: 'elevenlabs' | 'vapi';
+  provider: 'elevenlabs' | 'elevenlabs-sdk' | 'vapi';
   apiKey?: string;
   voiceId?: string;
   model?: string;

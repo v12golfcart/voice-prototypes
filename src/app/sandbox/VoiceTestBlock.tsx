@@ -10,6 +10,7 @@ interface VoiceTestBlockProps {
   subtitle: string;
   prototype: string;
   error?: string | null;
+  notes?: React.ReactNode;
 }
 
 interface ActivityItem {
@@ -17,7 +18,7 @@ interface ActivityItem {
   message: string;
 }
 
-export function VoiceTestBlock({ title, subtitle, prototype, error }: VoiceTestBlockProps) {
+export function VoiceTestBlock({ title, subtitle, prototype, error, notes }: VoiceTestBlockProps) {
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const userStopAtRef = useRef<Date | null>(null);
   const playbackStartAtRef = useRef<Date | null>(null);
@@ -38,11 +39,11 @@ export function VoiceTestBlock({ title, subtitle, prototype, error }: VoiceTestB
     // Append to log
     setActivity(prev => [...prev, { timestamp: now, message }]);
 
-    if (message === 'user clicks button to stop talking') {
+    if (message === 'user clicks button to stop talking' || message === 'user stops speaking') {
       userStopAtRef.current = now;
     }
 
-    if (message === 'TTS -- speech playback started') {
+    if (message === 'TTS -- speech playback started' || message === 'assistant starts speaking') {
       playbackStartAtRef.current = now;
       if (userStopAtRef.current) {
         setTotalWaitMs(now.getTime() - userStopAtRef.current.getTime());
@@ -74,6 +75,12 @@ export function VoiceTestBlock({ title, subtitle, prototype, error }: VoiceTestB
             <Text size="md" c="dimmed">
               {subtitle}
             </Text>
+
+            {notes && (
+              <Box mt="xs">
+                {notes}
+              </Box>
+            )}
           </Stack>
         </Box>
 

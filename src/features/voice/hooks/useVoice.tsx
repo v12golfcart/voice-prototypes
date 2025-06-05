@@ -5,6 +5,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { VoiceState, VoiceSession, VoiceMessage, VoiceProvider } from '@/lib/voice/types';
 import { getVoiceConfig } from '@/lib/voice/config';
 import { ElevenLabsProvider } from '@/lib/voice/providers/elevenlabs';
+import { ElevenLabsSdkProvider } from '@/lib/voice/providers/elevenlabsSdk';
 
 export function useVoice(prototype: string) {
   const [state, setState] = useState<VoiceState>({
@@ -27,6 +28,9 @@ export function useVoice(prototype: string) {
       switch (config.provider) {
         case 'elevenlabs':
           providerRef.current = new ElevenLabsProvider();
+          break;
+        case 'elevenlabs-sdk':
+          providerRef.current = new ElevenLabsSdkProvider();
           break;
         default:
           throw new Error(`Unsupported provider: ${config.provider}`);
@@ -79,6 +83,13 @@ export function useVoice(prototype: string) {
     if (!providerRef.current) return;
 
     try {
+      // Skip heavy pipeline for SDK provider
+      if (providerRef.current.name === 'elevenlabs-sdk') {
+        await providerRef.current.stopRecording();
+        setState(prev => ({ ...prev, isRecording: false, isProcessing: false }));
+        return;
+      }
+
       setState(prev => ({ ...prev, isProcessing: true, isRecording: false }));
 
       const audioBlob = await providerRef.current.stopRecording();

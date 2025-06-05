@@ -44,6 +44,17 @@ export const voiceConfigs: Record<string, VoiceConfig> = {
       context: 'testing',
       maxDuration: 180, // 3 minutes max
     }
+  },
+  
+  // ElevenLabs Conversational AI SDK sandbox
+  'sandbox-sdk': {
+    provider: 'elevenlabs-sdk',
+    settings: {
+      // Public agent – replace with your actual agent ID (no auth required)
+      agentId: process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || 'REPLACE_WITH_AGENT_ID',
+      personality: 'experimental-sdk',
+      context: 'testing-sdk',
+    }
   }
 };
 

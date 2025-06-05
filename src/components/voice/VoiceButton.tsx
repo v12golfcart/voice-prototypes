@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Stack, Text, Alert, Loader } from '@mantine/core';
+import { Button, Stack, Alert, Loader } from '@mantine/core';
 import { IconMicrophone, IconMicrophoneOff, IconPlayerPlay, IconAlertCircle } from '@tabler/icons-react';
 import { useVoice } from './hooks/useVoice';
 
@@ -15,7 +15,6 @@ export function VoiceButton({ prototype, disabled = false, onActivity }: VoiceBu
     isRecording,
     isProcessing,
     isPlaying,
-    currentSession,
     error,
     startRecording,
     stopRecording,

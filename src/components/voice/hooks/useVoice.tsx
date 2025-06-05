@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { VoiceState, VoiceSession, VoiceMessage, VoiceProvider } from '@/lib/voice/types';
 import { getVoiceConfig } from '@/lib/voice/config';
 import { ElevenLabsProvider } from '@/lib/voice/providers/elevenlabs';
+import { ElevenLabsSdkProvider } from '@/lib/voice/providers/elevenlabsSdk';
 
 export function useVoice(prototype: string, options?: { onActivity?: (message: string) => void }) {
   const { onActivity } = options || {};
@@ -28,6 +29,9 @@ export function useVoice(prototype: string, options?: { onActivity?: (message: s
       switch (config.provider) {
         case 'elevenlabs':
           providerRef.current = new ElevenLabsProvider();
+          break;
+        case 'elevenlabs-sdk':
+          providerRef.current = new ElevenLabsSdkProvider();
           break;
         default:
           throw new Error(`Unsupported provider: ${config.provider}`);
@@ -65,7 +69,12 @@ export function useVoice(prototype: string, options?: { onActivity?: (message: s
         setState(prev => ({ ...prev, currentSession: newSession }));
       }
 
-      await providerRef.current!.startRecording();
+      if (providerRef.current!.name === 'elevenlabs-sdk') {
+        // Pass activity logger for latency measurement
+        await (providerRef.current as ElevenLabsSdkProvider).startRecording(options?.onActivity);
+      } else {
+        await providerRef.current!.startRecording();
+      }
     } catch (error) {
       setState(prev => ({ 
         ...prev, 
@@ -73,14 +82,22 @@ export function useVoice(prototype: string, options?: { onActivity?: (message: s
         error: error instanceof Error ? error.message : 'Failed to start recording'
       }));
     }
-  }, [prototype, state.currentSession, initializeProvider]);
+  }, [prototype, state.currentSession, initializeProvider, options]);
 
   // Stop recording and process
   const stopRecording = useCallback(async () => {
     if (!providerRef.current) return;
 
     try {
-      setState(prev => ({ ...prev, isRecording: false, isProcessing: true }));
+      // For SDK provider we don't run heavy post-processing pipeline
+      if (providerRef.current.name === 'elevenlabs-sdk') {
+        await providerRef.current.stopRecording();
+        onActivity?.('user stops speaking');
+        setState(prev => ({ ...prev, isRecording: false, isProcessing: false }));
+        return;
+      }
+
+      setState(prev => ({ ...prev, isProcessing: true, isRecording: false }));
 
       const audioBlob = await providerRef.current.stopRecording();
       
