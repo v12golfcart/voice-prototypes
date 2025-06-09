@@ -1,23 +1,18 @@
 'use client';
 
+// This file is copied from the former Instant Insight route and serves the new UXR Prototype path.
+// ... existing code duplicated below ...
+
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button, Stack, Alert, Loader, Card, Text, ActionIcon, Center } from '@mantine/core';
 import { IconPhone, IconPhoneOff, IconMicrophone, IconAlertCircle } from '@tabler/icons-react';
 import { PrototypeLayout } from '@/components/shared/PrototypeLayout';
-
-// ---------------------------------------------------------------------------
-//  Constants
-// ---------------------------------------------------------------------------
 
 const AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_UXR_AGENT_ID || '';
 
 const SCENARIO =
   'You are a researcher for Discord and have been tasked to learn what types of problems people are facing with voice. You are about to connect with a participant who has opted into sharing details after reporting they had a bad experience after leaving a voice call.';
 const FIRST_MESSAGE = 'Hello! Can you tell me about the issue you faced?';
-
-// ---------------------------------------------------------------------------
-//  Types
-// ---------------------------------------------------------------------------
 
 type Status = 'idle' | 'connecting' | 'active' | 'speaking' | 'error';
 
@@ -27,7 +22,6 @@ interface ElevenConversation {
   setMuted?: (mute: boolean) => Promise<void> | void;
 }
 
-// Helper to mute/unmute with backwards compatibility
 async function setConversationMuted(conv: ElevenConversation, mute: boolean) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const c: any = conv;
@@ -38,19 +32,12 @@ async function setConversationMuted(conv: ElevenConversation, mute: boolean) {
   }
 }
 
-// ---------------------------------------------------------------------------
-//  Component
-// ---------------------------------------------------------------------------
-
-export default function InstantInsightPage() {
+export default function UxrPrototypePage() {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
   const conversationRef = useRef<ElevenConversation | null>(null);
   const [isPTTPressed, setIsPTTPressed] = useState(false);
 
-  // -------------------------------------------------------
-  //  Start call
-  // -------------------------------------------------------
   const startCall = useCallback(async () => {
     setError(null);
     if (!AGENT_ID) {
@@ -80,7 +67,6 @@ export default function InstantInsightPage() {
       }) as unknown as ElevenConversation;
 
       conversationRef.current = conversation;
-      // Mute mic until PTT pressed
       await setConversationMuted(conversation, true);
       setStatus('active');
     } catch (err) {
@@ -90,9 +76,6 @@ export default function InstantInsightPage() {
     }
   }, []);
 
-  // -------------------------------------------------------
-  //  End call
-  // -------------------------------------------------------
   const endCall = useCallback(async () => {
     try {
       if (conversationRef.current) {
@@ -107,9 +90,6 @@ export default function InstantInsightPage() {
     }
   }, []);
 
-  // -------------------------------------------------------
-  //  Push-to-talk handlers
-  // -------------------------------------------------------
   const handlePTTDown = () => {
     if (conversationRef.current) {
       setConversationMuted(conversationRef.current, false).catch(() => undefined);
@@ -124,7 +104,6 @@ export default function InstantInsightPage() {
     setIsPTTPressed(false);
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (conversationRef.current) {
@@ -133,9 +112,6 @@ export default function InstantInsightPage() {
     };
   }, []);
 
-  // -------------------------------------------------------
-  //  UI helpers
-  // -------------------------------------------------------
   const statusLabel: Record<Status, string> = {
     idle: 'Ready',
     connecting: 'Connecting…',
@@ -148,9 +124,6 @@ export default function InstantInsightPage() {
   const showConnecting = status === 'connecting';
   const inCall = status === 'active' || status === 'speaking';
 
-  // -------------------------------------------------------
-  //  Render
-  // -------------------------------------------------------
   return (
     <PrototypeLayout title="UXR Prototype">
       <Center>
@@ -163,9 +136,8 @@ export default function InstantInsightPage() {
           <Center style={{ height: 120 }}>
             <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end' }}>
               {[...Array(5)].map((_, i) => {
-                // Vary duration and delay for less uniform motion
-                const duration = 0.8 + i * 0.15; // seconds
-                const delay = i * 0.05; // seconds
+                const duration = 0.8 + i * 0.15;
+                const delay = i * 0.05;
                 return (
                   <div
                     key={i}
@@ -185,13 +157,20 @@ export default function InstantInsightPage() {
               })}
             </div>
           </Center>
-
-          {/* Keyframes injected once */}
           <style jsx>{`
             @keyframes eq-bars {
-              0% {transform: scaleY(0.2); background: #4dabf7;}
-              50% {transform: scaleY(1); background: #4dabf7;}
-              100% {transform: scaleY(0.2); background: #4dabf7;}
+              0% {
+                transform: scaleY(0.2);
+                background: #4dabf7;
+              }
+              50% {
+                transform: scaleY(1);
+                background: #4dabf7;
+              }
+              100% {
+                transform: scaleY(0.2);
+                background: #4dabf7;
+              }
             }
           `}</style>
 
@@ -203,26 +182,17 @@ export default function InstantInsightPage() {
 
           <Stack gap="md" mt="md">
             {showStartButton && (
-              <Button
-                leftSection={<IconPhone size={16} />}
-                color="blue"
-                onClick={startCall}
-                fullWidth
-                mt="md"
-              >
+              <Button leftSection={<IconPhone size={16} />} color="blue" onClick={startCall} fullWidth mt="md">
                 Start call
               </Button>
             )}
-
             {showConnecting && (
               <Button leftSection={<Loader size={16} />} color="gray" disabled fullWidth mt="md">
                 Connecting…
               </Button>
             )}
-
             {inCall && (
               <>
-                {/* Row with PTT centered and End-call right */}
                 <div style={{ position: 'relative', width: '100%', paddingTop: 16, paddingBottom: 4 }}>
                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     <ActionIcon
@@ -239,8 +209,6 @@ export default function InstantInsightPage() {
                       <IconMicrophone size={48} />
                     </ActionIcon>
                   </div>
-
-                  {/* End Call button positioned to the right */}
                   <ActionIcon
                     size={48}
                     radius={48}
@@ -252,7 +220,6 @@ export default function InstantInsightPage() {
                     <IconPhoneOff size={24} />
                   </ActionIcon>
                 </div>
-
                 <Text size="xs" c="dimmed" mt={4}>
                   Push to Talk
                 </Text>

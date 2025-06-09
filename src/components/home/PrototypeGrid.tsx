@@ -5,16 +5,10 @@ import { PrototypeCard } from '../shared/PrototypeCard';
 
 const prototypes = [
   {
-    id: 'instant-insight',
-    title: 'Instant Insight Box',
+    id: 'uxr-prototype',
+    title: 'UXR Prototype',
     description: 'Capture usability breakdowns at the moment of friction for SaaS products',
-    href: '/instant-insight'
-  },
-  {
-    id: 'smart-concierge',
-    title: 'Smart Follow-Up Concierge',
-    description: 'Post-purchase feedback and support for CPG and e-commerce brands',
-    href: '/smart-concierge'
+    href: '/uxr-prototype'
   },
   {
     id: 'expert-pulse',
