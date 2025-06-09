@@ -45,9 +45,30 @@ export default function UxrPrototypePage() {
   const [firstMsg, setFirstMsg] = useState<string>(DEFAULT_FIRST_MSG);
   const [savedScenario, setSavedScenario] = useState<string>(DEFAULT_SCENARIO);
   const [savedFirst, setSavedFirst] = useState<string>(DEFAULT_FIRST_MSG);
+  const [log, setLog] = useState<{ role: 'user' | 'assistant'; text: string }[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [summary, setSummary] = useState<any | null>(null);
+  const [isSummarising, setIsSummarising] = useState(false);
+  const [progress, setProgress] = useState<{ callDone: boolean; transcript: boolean; analyzed: boolean }>({
+    callDone: false,
+    transcript: false,
+    analyzed: false,
+  });
+  const [agentUtterance, setAgentUtterance] = useState<string>('');
+
+  const resetProgress = () =>
+    setProgress({
+      callDone: false,
+      transcript: false,
+      analyzed: false,
+    });
 
   const startCall = useCallback(async () => {
     setError(null);
+    resetProgress();
+    setSummary(null);
+    setIsSummarising(false);
+    setAgentUtterance('');
     if (!AGENT_ID) {
       setError('Missing ElevenLabs agent id');
       setStatus('error');
@@ -55,6 +76,10 @@ export default function UxrPrototypePage() {
     }
 
     try {
+      // Debug: call initialization
+      // eslint-disable-next-line no-console
+      console.log('[UxrPrototype] Starting call');
+
       setStatus('connecting');
       const { Conversation } = await import('@elevenlabs/client');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -72,11 +97,24 @@ export default function UxrPrototypePage() {
           setError(String(err));
           setStatus('error');
         },
+        onMessage: (m: { message: string; source: 'user' | 'ai' }) => {
+          // Debug: onMessage event
+          // eslint-disable-next-line no-console
+          console.log('[UxrPrototype] onMessage', m);
+          setLog((prev) => [...prev, { role: m.source === 'user' ? 'user' : 'assistant', text: m.message }]);
+          if (m.source === 'ai') {
+            setAgentUtterance(m.message);
+          }
+        },
       }) as unknown as ElevenConversation;
 
       conversationRef.current = conversation;
       await setConversationMuted(conversation, true);
       setStatus('active');
+
+      // Debug: session started
+      // eslint-disable-next-line no-console
+      console.log('[UxrPrototype] Call session started', conversation);
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'Failed to start call');
@@ -91,12 +129,42 @@ export default function UxrPrototypePage() {
         conversationRef.current = null;
       }
       setStatus('idle');
+      setProgress((p) => ({ ...p, callDone: true }));
+      setAgentUtterance('');
+
+      // Trigger summary generation
+      if (log.length > 0) {
+        // Debug: log transcript before sending to summary endpoint
+        // eslint-disable-next-line no-console
+        console.log('[UxrPrototype] Transcript to summarise:', log);
+        setProgress((p) => ({ ...p, transcript: true }));
+        setIsSummarising(true);
+        try {
+          const res = await fetch('/api/summarise', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: log }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setSummary(data.summary);
+            setProgress({ callDone: true, transcript: true, analyzed: true });
+          } else {
+            showNotification({ title: 'Summary failed', message: data.error || 'Error', color: 'red' });
+          }
+        } catch (err) {
+          showNotification({ title: 'Summary failed', message: String(err), color: 'red' });
+        } finally {
+          setIsSummarising(false);
+          setLog([]);
+        }
+      }
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'Failed to end call');
       setStatus('error');
     }
-  }, []);
+  }, [log]);
 
   const handlePTTDown = () => {
     if (conversationRef.current) {
@@ -205,6 +273,29 @@ export default function UxrPrototypePage() {
             }
           `}</style>
 
+          {/* Agent utterance placeholder below waveforms (visible only during call) */}
+          {inCall && (
+          <div
+            style={{
+              height: 80,
+              display: 'block',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              marginTop: 4,
+              marginBottom: 8,
+              border: '1px dashed #ccc',
+              padding: 8,
+              boxSizing: 'border-box',
+            }}
+          >
+            {agentUtterance && (
+              <Text size="sm" c="dimmed" style={{ wordBreak: 'break-word' }}>
+                {agentUtterance}
+              </Text>
+            )}
+          </div>
+          )}
+
           {error && (
             <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light" mt="md">
               {error}
@@ -281,6 +372,58 @@ export default function UxrPrototypePage() {
               Save
             </Button>
           </Stack>
+        </Card>
+      </Center>
+
+      {/* Insights Summary */}
+      <Center mt="xl">
+        <Card shadow="sm" radius="lg" p="lg" style={{ width: 320 }}>
+          {/* Fresh page / no call yet */}
+          {status === 'idle' && !progress.callDone && !isSummarising && !summary && (
+            <Stack align="center" gap="sm">
+              <Text size="sm" c="dimmed">
+                Insights will load at the end of the call.
+              </Text>
+            </Stack>
+          )}
+
+          {/* Loader when generating summary */}
+          {isSummarising && (
+            <Stack align="center" gap="sm">
+              <Loader />
+              <Text size="sm">Generating summary…</Text>
+            </Stack>
+          )}
+
+          {/* Checklist & summary (shown during/after calls) */}
+          {(status !== 'idle' || progress.callDone || isSummarising || summary) && (
+            <Stack gap="xs" mt={isSummarising ? 'md' : 0}>
+              <Text fw={600}>Insights Summary</Text>
+              <Text size="sm" c={progress.callDone ? undefined : 'dimmed'}>
+                {progress.callDone ? '✅' : '▢'} Call done
+              </Text>
+              <Text size="sm" c={progress.transcript ? undefined : 'dimmed'}>
+                {progress.transcript ? '✅' : '▢'} Transcript received
+              </Text>
+              <Text size="sm" c={progress.analyzed ? undefined : 'dimmed'}>
+                {progress.analyzed ? '✅' : '▢'} Analyzed
+              </Text>
+
+              {summary && (
+                <>
+                  <Text size="sm">
+                    <b>Themes:</b> {Array.isArray(summary.themes) ? summary.themes.join(', ') : '—'}
+                  </Text>
+                  <Text size="sm">
+                    <b>Summary:</b> {summary.concise_summary ?? '—'}
+                  </Text>
+                  <Text size="sm" fs="italic">
+                    &ldquo;{summary.quote ?? ''}&rdquo;
+                  </Text>
+                </>
+              )}
+            </Stack>
+          )}
         </Card>
       </Center>
     </PrototypeLayout>
