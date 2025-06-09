@@ -147,8 +147,17 @@ export default function UxrPrototypePage() {
           });
           const data = await res.json();
           if (res.ok) {
-            setSummary(data.summary);
-            setProgress({ callDone: true, transcript: true, analyzed: true });
+            if (data.insufficient) {
+              showNotification({
+                title: 'Not enough data',
+                message: 'Participant did not provide enough input to generate insights.',
+                color: 'yellow',
+              });
+              setProgress({ callDone: true, transcript: true, analyzed: false });
+            } else {
+              setSummary(data.summary);
+              setProgress({ callDone: true, transcript: true, analyzed: true });
+            }
           } else {
             showNotification({ title: 'Summary failed', message: data.error || 'Error', color: 'red' });
           }

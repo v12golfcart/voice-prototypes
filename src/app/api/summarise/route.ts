@@ -7,6 +7,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No messages' }, { status: 400 });
     }
 
+    // --- Early exit if there isn't enough user content to summarise ---
+    const userMessages = messages.filter((m: { role: string; text: string }) => m.role === 'user');
+    // Count total words spoken by the participant
+    const totalUserWords = userMessages.reduce((acc: number, m: { text: string }) => {
+      return acc + m.text.trim().split(/\s+/).filter(Boolean).length;
+    }, 0);
+
+    // Heuristics: at least 2 user turns and 15 words total
+    const MIN_TURNS = 2;
+    const MIN_WORDS = 15;
+
+    if (userMessages.length < MIN_TURNS || totalUserWords < MIN_WORDS) {
+      return NextResponse.json(
+        {
+          insufficient: true,
+          reason: 'Not enough participant input to generate meaningful insights.',
+        },
+        { status: 200 }
+      );
+    }
+
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
     if (!OPENAI_KEY) {
       return NextResponse.json({ error: 'Missing OpenAI key' }, { status: 500 });
