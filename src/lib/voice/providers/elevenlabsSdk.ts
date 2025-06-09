@@ -10,6 +10,7 @@ export class ElevenLabsSdkProvider extends BaseVoiceProvider {
   name = 'elevenlabs-sdk';
   private conversation: ElevenConversation | null = null;
   private onActivity?: (msg: string) => void;
+  private hasLoggedSpeech = false;
 
   async initialize(config: VoiceConfig): Promise<void> {
     this.config = config;
@@ -42,7 +43,28 @@ export class ElevenLabsSdkProvider extends BaseVoiceProvider {
         onModeChange: (mode: { mode: 'speaking' | 'listening' }) => {
           if (mode.mode === 'speaking') {
             this.onActivity?.('assistant starts speaking');
+            this.hasLoggedSpeech = false; // reset for next user turn
           }
+          if (mode.mode === 'listening') {
+            this.onActivity?.('agent listening – your turn');
+            this.hasLoggedSpeech = false;
+          }
+        },
+        onMessage: (msg: unknown) => {
+          console.debug('[11Labs SDK] onMessage', msg);
+          try {
+            const evt = msg as Record<string, unknown>;
+            if (evt?.type === 'vad_score') {
+              /* eslint-disable @typescript-eslint/no-explicit-any */
+              const score = (evt as any).vad_score_event?.vad_score as number | undefined;
+              /* eslint-enable */
+              console.debug('[11Labs SDK] VAD score', score);
+              if (!this.hasLoggedSpeech && typeof score === 'number' && score > 0.2) {
+                this.onActivity?.('user starts speaking');
+                this.hasLoggedSpeech = true;
+              }
+            }
+          } catch {/* ignore */}
         },
         onError: (err: unknown) => {
           console.error('[11Labs SDK] conversation error', err);
