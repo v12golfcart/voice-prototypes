@@ -25,8 +25,13 @@ export class ElevenLabsSdkProvider extends BaseVoiceProvider {
     // First invocation: start a brand-new session
     if (!this.conversation) {
       if (!this.config) throw new Error('Provider not initialized');
-      const agentId = (this.config.settings as Record<string, unknown>)?.agentId as string;
+      const settings = this.config.settings as Record<string, unknown> | undefined;
+      const agentId = settings?.agentId as string;
       if (!agentId) throw new Error('Missing agentId in config.settings');
+
+      // Optional placeholders that can be supplied via settings.
+      const scenario = settings?.scenario as string | undefined;
+      const firstMessage = (settings?.first_message || settings?.firstMessage) as string | undefined;
 
       // Ensure mic permission is granted; stop tracks right away so we don't keep an extra open stream.
       try {
@@ -40,6 +45,8 @@ export class ElevenLabsSdkProvider extends BaseVoiceProvider {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.conversation = await (Conversation as any).startSession({
         agentId,
+        ...(scenario ? { scenario } : {}),
+        ...(firstMessage ? { first_message: firstMessage } : {}),
         onModeChange: (mode: { mode: 'speaking' | 'listening' }) => {
           if (mode.mode === 'speaking') {
             this.onActivity?.('assistant starts speaking');
