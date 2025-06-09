@@ -4,15 +4,19 @@
 // ... existing code duplicated below ...
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Button, Stack, Alert, Loader, Card, Text, ActionIcon, Center } from '@mantine/core';
+import { Button, Stack, Alert, Loader, Card, Text, ActionIcon, Center, Textarea, TextInput } from '@mantine/core';
 import { IconPhone, IconPhoneOff, IconMicrophone, IconAlertCircle } from '@tabler/icons-react';
 import { PrototypeLayout } from '@/components/shared/PrototypeLayout';
+import { showNotification } from '@mantine/notifications';
 
 const AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_UXR_AGENT_ID || '';
 
-const SCENARIO =
+const DEFAULT_SCENARIO =
   'You are a researcher for Discord and have been tasked to learn what types of problems people are facing with voice. You are about to connect with a participant who has opted into sharing details after reporting they had a bad experience after leaving a voice call.';
-const FIRST_MESSAGE = 'Hello! Can you tell me about the issue you faced?';
+const DEFAULT_FIRST_MSG = 'Hello! Can you tell me about the issue you faced?';
+
+// You are a researcher for Discord and have been tasked to learn why people are asking for certain features. You are about to talk to a participant who submitted a feature idea
+// Hello! Can you tell me about your idea?
 
 type Status = 'idle' | 'connecting' | 'active' | 'speaking' | 'error';
 
@@ -37,6 +41,10 @@ export default function UxrPrototypePage() {
   const [error, setError] = useState<string | null>(null);
   const conversationRef = useRef<ElevenConversation | null>(null);
   const [isPTTPressed, setIsPTTPressed] = useState(false);
+  const [scenario, setScenario] = useState<string>(DEFAULT_SCENARIO);
+  const [firstMsg, setFirstMsg] = useState<string>(DEFAULT_FIRST_MSG);
+  const [savedScenario, setSavedScenario] = useState<string>(DEFAULT_SCENARIO);
+  const [savedFirst, setSavedFirst] = useState<string>(DEFAULT_FIRST_MSG);
 
   const startCall = useCallback(async () => {
     setError(null);
@@ -53,8 +61,8 @@ export default function UxrPrototypePage() {
       const conversation = await (Conversation as any).startSession({
         agentId: AGENT_ID,
         dynamicVariables: {
-          scenario: SCENARIO,
-          first_message: FIRST_MESSAGE,
+          scenario,
+          first_message: firstMsg,
         },
         onModeChange: (mode: { mode: 'speaking' | 'listening' }) => {
           setStatus(mode.mode === 'speaking' ? 'speaking' : 'active');
@@ -74,7 +82,7 @@ export default function UxrPrototypePage() {
       setError(err instanceof Error ? err.message : 'Failed to start call');
       setStatus('error');
     }
-  }, []);
+  }, [AGENT_ID, scenario, firstMsg]);
 
   const endCall = useCallback(async () => {
     try {
@@ -123,6 +131,29 @@ export default function UxrPrototypePage() {
   const showStartButton = status === 'idle' || status === 'error';
   const showConnecting = status === 'connecting';
   const inCall = status === 'active' || status === 'speaking';
+
+  // Save handler
+  const handleSave = async () => {
+    // No change safeguard
+    if (scenario === savedScenario && firstMsg === savedFirst) return;
+
+    // End active call
+    if (status === 'active' || status === 'speaking' || status === 'connecting') {
+      await endCall();
+    }
+
+    // Persist new defaults
+    setSavedScenario(scenario);
+    setSavedFirst(firstMsg);
+
+    showNotification({
+      title: 'Context updated',
+      message: 'New scenario and first message will be used for the next call.',
+      color: 'green',
+    });
+  };
+
+  const hasChanges = scenario !== savedScenario || firstMsg !== savedFirst;
 
   return (
     <PrototypeLayout title="UXR Prototype">
@@ -225,6 +256,30 @@ export default function UxrPrototypePage() {
                 </Text>
               </>
             )}
+          </Stack>
+        </Card>
+      </Center>
+
+      {/* Editable variables */}
+      <Center mt="xl">
+        <Card shadow="sm" radius="lg" p="lg" style={{ width: 320 }}>
+          <Stack gap="md">
+            <Text fw={600}>Context</Text>
+            <Textarea
+              label="Scenario"
+              autosize
+              minRows={3}
+              value={scenario}
+              onChange={(e) => setScenario(e.currentTarget.value)}
+            />
+            <TextInput
+              label="First message"
+              value={firstMsg}
+              onChange={(e) => setFirstMsg(e.currentTarget.value)}
+            />
+            <Button onClick={handleSave} fullWidth color={hasChanges ? 'blue' : 'gray'} disabled={!hasChanges}>
+              Save
+            </Button>
           </Stack>
         </Card>
       </Center>
