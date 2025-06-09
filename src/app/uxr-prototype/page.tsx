@@ -4,7 +4,19 @@
 // ... existing code duplicated below ...
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Button, Stack, Alert, Loader, Card, Text, ActionIcon, Center, Textarea, TextInput } from '@mantine/core';
+import {
+  Button,
+  Stack,
+  Alert,
+  Loader,
+  Card,
+  Text,
+  ActionIcon,
+  Center,
+  Textarea,
+  TextInput,
+  SegmentedControl,
+} from '@mantine/core';
 import { IconPhone, IconPhoneOff, IconMicrophone, IconAlertCircle } from '@tabler/icons-react';
 import { PrototypeLayout } from '@/components/shared/PrototypeLayout';
 import { showNotification } from '@mantine/notifications';
@@ -15,8 +27,10 @@ const DEFAULT_SCENARIO =
   'You are a researcher for Discord and have been tasked to learn what types of problems people are facing with voice. You are about to connect with a participant who has opted into sharing details after reporting they had a bad experience after leaving a voice call.';
 const DEFAULT_FIRST_MSG = 'Hello! Can you tell me about the issue you faced?';
 
-// You are a researcher for Discord and have been tasked to learn why people are asking for certain features. You are about to talk to a participant who submitted a feature idea
-// Hello! Can you tell me about your idea?
+// Alternative preset for feature request interviews
+const FEATURE_SCENARIO =
+  'You are a researcher for Discord and have been tasked to learn why people are asking for certain features. You are about to talk to a participant who submitted a feature idea';
+const FEATURE_FIRST_MSG = 'Hello! Can you tell me about your idea?';
 
 type Status = 'idle' | 'connecting' | 'active' | 'speaking' | 'error';
 
@@ -55,6 +69,7 @@ export default function UxrPrototypePage() {
     analyzed: false,
   });
   const [agentUtterance, setAgentUtterance] = useState<string>('');
+  const [preset, setPreset] = useState<'post' | 'feature' | 'custom'>('post');
 
   const resetProgress = () =>
     setProgress({
@@ -232,6 +247,34 @@ export default function UxrPrototypePage() {
 
   const hasChanges = scenario !== savedScenario || firstMsg !== savedFirst;
 
+  const applyPreset = useCallback(
+    async (type: 'post' | 'feature') => {
+      const newScenario = type === 'post' ? DEFAULT_SCENARIO : FEATURE_SCENARIO;
+      const newFirst = type === 'post' ? DEFAULT_FIRST_MSG : FEATURE_FIRST_MSG;
+
+      // Update UI fields immediately
+      setScenario(newScenario);
+      setFirstMsg(newFirst);
+
+      // End call if one is running so new defaults are used next time
+      if (status === 'active' || status === 'speaking' || status === 'connecting') {
+        await endCall();
+      }
+
+      // Persist as saved defaults
+      setSavedScenario(newScenario);
+      setSavedFirst(newFirst);
+
+      showNotification({
+        title: 'Preset applied',
+        message: type === 'post' ? 'Post-call feedback script saved.' : 'Feature request script saved.',
+        color: 'green',
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [endCall, status]
+  );
+
   return (
     <PrototypeLayout title="UXR Prototype">
       <Center>
@@ -370,12 +413,48 @@ export default function UxrPrototypePage() {
               autosize
               minRows={3}
               value={scenario}
-              onChange={(e) => setScenario(e.currentTarget.value)}
+              onChange={(e) => {
+                const val = e.currentTarget.value;
+                setScenario(val);
+                if (preset !== 'custom') {
+                  const expected = preset === 'post' ? DEFAULT_SCENARIO : FEATURE_SCENARIO;
+                  if (val !== expected) {
+                    setPreset('custom');
+                  }
+                }
+              }}
             />
             <TextInput
               label="First message"
               value={firstMsg}
-              onChange={(e) => setFirstMsg(e.currentTarget.value)}
+              onChange={(e) => {
+                const val = e.currentTarget.value;
+                setFirstMsg(val);
+                if (preset !== 'custom') {
+                  const expected = preset === 'post' ? DEFAULT_FIRST_MSG : FEATURE_FIRST_MSG;
+                  if (val !== expected) {
+                    setPreset('custom');
+                  }
+                }
+              }}
+            />
+            <SegmentedControl
+              size="xs"
+              fullWidth
+              radius="md"
+              data={[
+                { label: 'Post-call', value: 'post' },
+                { label: 'Feature req.', value: 'feature' },
+                { label: 'Custom', value: 'custom' },
+              ]}
+              value={preset}
+              onChange={async (value) => {
+                setPreset(value as 'post' | 'feature' | 'custom');
+
+                if (value === 'post' || value === 'feature') {
+                  await applyPreset(value as 'post' | 'feature');
+                }
+              }}
             />
             <Button onClick={handleSave} fullWidth color={hasChanges ? 'blue' : 'gray'} disabled={!hasChanges}>
               Save
