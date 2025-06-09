@@ -286,7 +286,7 @@ export default function UxrPrototypePage() {
           {inCall && (
           <div
             style={{
-              height: 80,
+              height: 120,
               display: 'block',
               overflowY: 'auto',
               overflowX: 'hidden',
